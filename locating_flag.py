@@ -1,9 +1,12 @@
 #This is a script for identify the antennas and polarisations output in the log file of plotms of casa. 
 #And it outputs the command for flagging data. 
+# by Zhi-Yu Zhang
+# pmozhang@gmail.com 
+# last update: 21 Mar 2019
 
 import os
 import glob
-from collections import Counter
+from   collections import Counter
 
 
 
@@ -67,7 +70,9 @@ for line in LastSection.split('\\n'):
 #print(sorted(ants, key=Counter(ants).get, reverse=True))
 
 
-topten = Counter(ants).most_common(10)
+topten = Counter(ants).most_common(3)
+
+print("-----------------")
 print(topten)
 print("-----------------")
 print("Most frequent antennas: ")
@@ -76,15 +81,15 @@ print("                        ")
 most_ant1 = topten[0][0]
 most_ant2 = topten[1][0]
 most_ant3 = topten[2][0]
-most_ant4 = topten[3][0]
 
 print(topten[0][0])
 print(topten[1][0])
 print(topten[2][0])
-print(topten[3][0])
 
-
+print("                        ")
+print("-----------------")
 print("flagdata(vis, mode='manual',antenna='"+str(most_ant1)+"')")
+print("-----------------")
 
 
 
@@ -99,4 +104,3 @@ print("flagdata(vis, mode='manual',antenna='"+str(most_ant1)+"')")
 
 
 string.close()
-
