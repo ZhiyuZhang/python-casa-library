@@ -69,7 +69,6 @@ for line in LastSection.split('\\n'):
 
 #print(sorted(ants, key=Counter(ants).get, reverse=True))
 
-
 topten = Counter(ants).most_common(3)
 
 print("-----------------")
@@ -78,14 +77,15 @@ print("-----------------")
 print("Most frequent antennas: ")
 print("                        ")
 
-most_ant1 = topten[0][0]
-most_ant2 = topten[1][0]
-most_ant3 = topten[2][0]
-
-print(topten[0][0])
-print(topten[1][0])
-print(topten[2][0])
-
+try:
+    most_ant1 = topten[0][0]
+    print(topten[0][0])
+    most_ant2 = topten[1][0]
+    print(topten[1][0])
+    most_ant3 = topten[2][0]
+    print(topten[2][0])
+except:
+    pass
 print("                        ")
 print("-----------------")
 print("flagdata(vis, mode='manual',antenna='"+str(most_ant1)+"')")
