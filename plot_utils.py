@@ -12,7 +12,7 @@ from casa import tbtool, plotms, plotants
 import analysisUtils as aU
 
 
-def check_info(vis=None, showgui=False, plotdir='./info', sciencespws='',
+def check_info(vis=None, showgui=False, plotdir='./', sciencespws='',
              show_ants=True, show_mosaic=True, show_uvcoverage=True,
              show_allobs=True):
     """ plot the basic information of the observation.
@@ -40,11 +40,11 @@ def check_info(vis=None, showgui=False, plotdir='./info', sciencespws='',
         plot the all the amp vs time
 
     """
-    os.system('mkdir -p info')
+    os.system('mkdir -p {}/info'.format(plotdir))
+    plotdir = plotdir + '/info'
 
     if show_ants:
-        plotants(vis=vis, figfile='{}/antenna_position.png'.format(plotdir), 
-                 showgui=showgui)
+        plotants(vis=vis, figfile='{}/antenna_position.png'.format(plotdir))
 
     if show_mosaic:
         aU.plotmosaic(vis, figfile='{}/mosaic.png'.format(plotdir))
@@ -77,7 +77,8 @@ def check_cal(vis=None, fdmspw=None, tdmspws=None, calibrator_fields=None,
     fdmspw : str
         the spw of frequency domain mode
     tdmspws : list
-        the spws of time domain mode, list contain single spw, 
+        the spws of time domain mode, the spws used for tsys calibration 
+        usually 128 channels.
         example: ['1', '3','4']
     calibrator_fields : list
         a list contains all the fields of calibrators

@@ -30,7 +30,7 @@ step_title = {0: 'Import of the ASDM',
               4: 'Generation and time averaging of the WVR cal table',
               5: 'Generation of the Tsys cal table',
               6: 'Generation of the antenna position cal table',
-              7: 'Application of the WVR, Tsys and antpos cal tables',
+              7: 'Application of the WVR, Tsys and antpos cal tables (+plots)',
               8: 'Split out science SPWs and time average',
               9: 'Listobs, clear pointing table, and save original flags',
               10: 'Initial flagging',
@@ -40,7 +40,7 @@ step_title = {0: 'Import of the ASDM',
               14: 'Save flags before gain cal',
               15: 'Gain calibration',
               16: 'Save flags before applycal',
-              17: 'Application of the bandpass and gain cal tables',
+              17: 'Application of the bandpass and gain cal tables (+plots)',
               18: 'Split out corrected column',
               19: 'Save flags after applycal'}
 thesteps = step_title.keys()
@@ -54,6 +54,7 @@ plotdir = './'+uidshortname
 msfile = uidname + '.ms'
 splitmsfile = uidname + '.ms.split'
 calibrator_name = 'Mars'
+plot_results = True
 
 # variable defined for interactive runing
 try:
@@ -146,16 +147,7 @@ if mystep == 5:
     gencal(vis = msfile,
            caltable = msfile+'.tsys',
            caltype = 'tsys')
-  
-    if True:
-        check_cal(vis=msfile, fdmspw='16',
-                  calibrator_fields='0,2,3',
-                  refant='CM03', plotdir=plotdir+'/BeforeBandpassCalibration', 
-                  science_field='Cen*', flux_calibrator='Mars', 
-                  tdmspws=['8','10','12','14'], 
-                  plot_time=True, plot_freq=True, plot_tsys=True) 
-        
-
+     
     mystep += 1
     
 ######################## Step 6 ###########################
@@ -182,7 +174,7 @@ if mystep == 7:
     from recipes.almahelpers import tsysspwmap
     tsysmap = tsysspwmap(vis = '{}.ms'.format(uidname), 
                          tsystable = '{}.ms.tsys'.format(uidname))
-  
+    
     applycal(vis = msfile,
              field = '0',
              spw = '16,18,20,22',
@@ -228,10 +220,11 @@ if mystep == 7:
 
     mystep += 1
 
-    if True:
+    # check the data after the WVR, Tsys and Antenna calibration
+    if plot_results:
         check_cal(vis=msfile, fdmspw='16',
                   calibrator_fields='0,2,3',
-                  refant='CM03', plotdir='./plots', 
+                  refant='CM03', plotdir=plotdir+'/AfterTsysCalibration', 
                   science_field='Cen*', flux_calibrator='Mars', 
                   tdmspws=['8','10','12','14'], 
                   plot_time=True, plot_freq=True, plot_tsys=True) 
@@ -464,7 +457,7 @@ if mystep == 17:
              flagbackup = False)
   
     mystep += 1
-    if True:
+    if plot_results:
         check_cal(vis=splitmsfile, fdmspw='0', calibrator_fields=['0','2','3'], 
                   refant=refer_antenna, 
                   plotdir=plotdir+'/AfterBandpassCalibration', 
