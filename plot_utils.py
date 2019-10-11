@@ -11,6 +11,66 @@ import numpy as np
 from casa import tbtool, plotms, plotants
 import analysisUtils as aU
 
+def spw_expand(spwstr):
+    """expand the spw string into a list
+
+    Parameters
+    ----------
+    spwstr : str or list
+        example: '1,3,4', '1~3', ['1','3','4']
+
+    Returns
+    -------
+    a list of single spws
+
+    """
+    if '~' in spwstr:
+        try: 
+            spw_range = spwstr.split('~')
+            spw_nums = list(range(int(spw_range[0]), int(spw_range[-1])+1))
+            spw_list = map(str, spw_nums)
+        except:
+            raise ValueError("Invalide steps parameter! Checking the doc.")
+    elif ',' in spwstr:
+        spw_list = spwstr.split(',')
+    else:
+        spw_list = spwstr
+
+    return spw_list
+
+def spw_join(spw_list):
+    """do the oposite things as `spw_expand`
+    
+    Parameters
+    ----------
+    spw_list : list
+        example: ['1','2','4'], ['J1427-4206', 'Titan', 'Centaurus_A']
+    """
+    spwstr = ''
+    for spw in spw_list:
+        spwstr += spw+','
+
+    return spwstr[:-1]
+
+def group_antenna(refant, antenna_list, subgroup_num=6):
+    """group a large number of antenna into small subgroup for plot procedures
+
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    A list of subgroups
+    """
+    refant_idx = np.where(antenna_list == refant)
+    # remove the refant from antenna_list
+    antenna_list_new = np.delete(antenna_list, refant_idx)
+    subgroups = []
+    for ant in antenna_list_new:
+        pass
+
+
+
 
 def check_info(vis=None, showgui=False, plotdir='./', sciencespws='',
              show_ants=True, show_mosaic=True, show_uvcoverage=True,
@@ -76,10 +136,10 @@ def check_cal(vis=None, fdmspw=None, tdmspws=None, calibrator_fields=None,
         measurements file
     fdmspw : str
         the spw of frequency domain mode
-    tdmspws : list
+    tdmspws : str
         the spws of time domain mode, the spws used for tsys calibration 
         usually 128 channels.
-        example: ['1', '3','4']
+        example: '1,3,4', '1~3'
     calibrator_fields : list
         a list contains all the fields of calibrators
         example: ['0', '2', '3'] or ['J1427-4206', 'Mars']
@@ -136,6 +196,7 @@ def check_cal(vis=None, fdmspw=None, tdmspws=None, calibrator_fields=None,
     
     gridrows = int(np.ceil((len(ants)-1)/2))
     baselines = refant + '&*' # all the related baseline
+    baseline_subgroups = group_antenna(refant, ants, subgroup_num=6)
 
     if bandpass_calibrator:
         calibrator_fields = [bandpass_calibrator]
@@ -145,6 +206,7 @@ def check_cal(vis=None, fdmspw=None, tdmspws=None, calibrator_fields=None,
         print("Plot frequency related calibration for fields: {} ...".format(calibrator_fields))
         os.system('mkdir -p {}/freq/'.format(plotdir))
         for field in calibrator_fields:
+            # for antenna in baseline_subgroups:
             # for amplitude
             plotms(vis=vis, field=field, xaxis='frequency', yaxis='amp',
                    spw=fdmspw, avgtime='1e8', avgscan=True, coloraxis='corr',
@@ -224,7 +286,7 @@ def check_cal(vis=None, fdmspw=None, tdmspws=None, calibrator_fields=None,
         # plot tsys vs frequency
         if tdmspws is None:
             raise ValueError("No tdmspws founded!")
-        for spw in tdmspws:
+        for spw in spw_expand(tdmspws):
             plotms(vis=vis+'.tsys', xaxis='freq', yaxis='Tsys', spw=spw,
                    gridcols=2, gridrows=gridrows, iteraxis='antenna',
                    coloraxis='corr', showgui=showgui,
