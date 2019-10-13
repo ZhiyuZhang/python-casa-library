@@ -57,7 +57,7 @@ for line in LastSection.split('\\n'):
        d    = line.find('Spw=')
        e    = line.find('Scan=')
        ant1 = str(line[a+3 :a+7 ])
-       ant2 = str(line[a+14:a+18])
+       ant2 = str(line[a+15:a+19])
        ants.append(ant1)
        ants.append(ant2)
        corr = str(line[b+5 :b+7 ])
@@ -70,20 +70,21 @@ for line in LastSection.split('\\n'):
 #print(sorted(ants, key=Counter(ants).get, reverse=True))
 
 topten = Counter(ants).most_common(3)
+freq   = Counter(ants)
 
 print("-----------------")
 print(topten)
 print("-----------------")
-print("Most frequent antennas: ")
+print("Most frequent antennas, and their frequencies: ")
 print("                        ")
 
 try:
     most_ant1 = topten[0][0]
-    print(topten[0][0])
+    print(topten[0][0],freq[topten[0][0]])
     most_ant2 = topten[1][0]
-    print(topten[1][0])
+    print(topten[1][0],freq[topten[1][0]])
     most_ant3 = topten[2][0]
-    print(topten[2][0])
+    print(topten[2][0],freq[topten[2][0]])
 except:
     pass
 print("                        ")
