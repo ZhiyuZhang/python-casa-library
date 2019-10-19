@@ -58,30 +58,62 @@ plot_results = True
 
 # variable defined for interactive runing
 try:
-    mystep
+    mysteps
 except:
-    mystep = 0
+    mysteps = []
 
 
 # pre-define helper function
 def step2log(mystep):
+    # put the step information into the log and terminal
     if mystep in thesteps:
         casalog.post('Step '+str(mystep)+' '+step_title[mystep],'INFO')
         print('Step ', mystep, step_title[mystep])
 
+def initial_runstep(mysteps):
+    """generate the runsteps from input
+    
+    Parameters
+    ----------
+    mystep : list or str
+        Can either be a list contains integers or a string for the steo range
+        example: [0,1,2,3], '3~19'
+    """
+    if mysteps == []:
+        runsteps = list(range(0, 20))
+    if isinstance(mysteps, list):
+        for i in mysteps:
+            if (not isinstance(i, int)) or (i > 19) or (i < 0):
+                raise ValueError("Invalide steps parameter! Checking the doc.")
+            else:
+                runsteps = mysteps
+    if isinstance(mysteps, str):
+        try: 
+            steps_range = mysteps.split('~')
+            runsteps = list(range(int(steps_range[0]), int(steps_range[-1])+1))
+        except:
+            raise ValueError("Invalide steps parameter! Checking the doc.")
+
+    return runsteps
+
+########################################################
+# star runsteps
+runsteps = initial_runstep(mysteps)
+
 ######################## Setp 0 #########################
 # Import of the ASDM
-if mystep == 0:
-    step2log(mystep)
+runstep = 0
+if runstep in runsteps:
+    step2log(runstep)
     if os.path.exists(msfile) == False:
         importasdm(asdm='../raw/'+uidname + '.asdm.sdm', vis=msfile, 
                     asis='Antenna Station Receiver Source CalAtmosphere CalWVR')
-    mystep += 1
 
 ######################## Step 1 ###########################
 # Fix old cycle problems
-if mystep == 1:
-    step2log(mystep)
+runstep = 1
+if runstep in runsteps:
+    step2log(runstep)
     
     if False: # No issue found
         es.fixForCSV2555(msfile)
@@ -94,17 +126,16 @@ if mystep == 1:
     fixplanets(vis = msfile,
         field = '2', # flux calibrator
         fixuvw = True)
-    mystep += 1
   
 ######################## Step 2 ###########################
 # listobs
-if mystep == 2:
-    step2log(mystep)
+runstep = 2
+if runstep in runsteps:
+    step2log(runstep)
 
     os.system('rm -rf {}.ms.listobs.txt'.format(uidname))
     listobs(vis = msfile,
             listfile = msfile+'.listobs.txt')
-    mystep += 1
 
     if True:
         check_info(msfile)
@@ -112,8 +143,9 @@ if mystep == 2:
 
 ######################## Step 3 ###########################
 # A priori flagging
-if mystep == 3:
-    step2log(mystep)
+runstep = 3
+if runstep in runsteps:
+    step2log(runstep)
 
     # flag shadowed data by nearby antennas
     flagdata(vis = msfile, mode = 'shadow', flagbackup = False)
@@ -125,35 +157,32 @@ if mystep == 3:
     # Store the priori flags
     flagmanager(vis = msfile, mode = 'save', versionname = 'Priori')
     
-    mystep += 1
-
 ######################## Step 4 ###########################
 # Generation and time averaging of the WVR cal table
-if mystep == 4:
-    step2log(mystep)
+runstep = 4
+if runstep in runsteps:
+    step2log(runstep)
 
     # Already calculated the WVR
     # wvrgcal(vis=msfile,
     #          caltable = msfile+'.wvrgal')
 
-    mystep += 1
-
 ######################## Step 5 ###########################
 # Generation of the Tsys cal table
-if mystep == 5:
-    step2log(mystep)
+runstep = 5
+if runstep in runsteps:
+    step2log(runstep)
 
     os.system('rm -rf {}.ms.tsys'.format(uidname))
     gencal(vis = msfile,
            caltable = msfile+'.tsys',
            caltype = 'tsys')
      
-    mystep += 1
-    
 ######################## Step 6 ###########################
 # Generation of the antenna position cal table
-if mystep == 6:
-    step2log(mystep)
+runstep = 6
+if runstep in runsteps:
+    step2log(runstep)
 
     # Position for antenna CM05 is derived from baseline run made on 2014-06-02 04:15:36.
     os.system('rm -rf {}.ms.antpos'.format(uidname)) 
@@ -164,12 +193,12 @@ if mystep == 6:
            parameter = [0,0,0])
            #  parameter = [8.01868736744e-07,-9.60193574429e-07,-5.20143657923e-07])
   
-    mystep += 1
 
 ######################## Step 7 ###########################
 # Application of the WVR, Tsys and antpos cal tables
-if mystep == 7:
-    step2log(mystep)
+runstep = 7
+if runstep in runsteps:
+    step2log(runstep)
 
     from recipes.almahelpers import tsysspwmap
     tsysmap = tsysspwmap(vis = '{}.ms'.format(uidname), 
@@ -218,8 +247,6 @@ if mystep == 7:
              calwt = True,
              flagbackup = False)
 
-    mystep += 1
-
     # check the data after the WVR, Tsys and Antenna calibration
     if plot_results:
         check_cal(vis=msfile, fdmspw='16',
@@ -231,8 +258,9 @@ if mystep == 7:
 
 ######################## Step 8 ###########################
 # Split out science SPWs and time average
-if mystep == 8:
-    step2log(mystep)
+runstep = 8
+if runstep in runsteps:
+    step2log(runstep)
 
     os.system('rm -rf {}.split'.format(msfile)) 
     os.system('rm -rf {}.split.flagversions'.format(msfile)) 
@@ -242,13 +270,12 @@ if mystep == 8:
           spw = '16,18,20,22',
           keepflags = False)
 
-    mystep += 1
-
 
 ######################## Step 9 ###########################
 # Listobs, clear pointing table, and save original flags
-if mystep == 9:
-    step2log(mystep)
+runstep = 9
+if runstep in runsteps:
+    step2log(runstep)
 
     os.system('rm -rf {}.listobs.txt'.format(splitmsfile))
     listobs(vis = splitmsfile,
@@ -266,12 +293,11 @@ if mystep == 9:
                     mode = 'save',
                     versionname = 'Original')
 
-    mystep += 1
-
 ######################## Step 10 ###########################
 # Initial flagging
-if mystep == 10:
-    step2log(mystep)
+runstep = 10
+if runstep in runsteps:
+    step2log(runstep)
     try:
       if interactive_flag != True:
         interactive_flag = False
@@ -292,36 +318,33 @@ if mystep == 10:
              spw = '0:2400~3200',
              flagbackup = False)
     
-    mystep += 1
-
 ######################## Step 11 ###########################
 # Putting a model for the flux calibrator(s)
-if mystep == 11:
-    step2log(mystep)
+runstep = 11
+if runstep in runsteps:
+    step2log(runstep)
 
     setjy(vis = splitmsfile,
           field = '2', # Mars
           spw = '0,1,2,3',
           standard = 'Butler-JPL-Horizons 2012')
   
-    mystep += 1
-
 ######################## Step 12 ###########################
 # Save flags before bandpass cal
-if mystep == 12:
-    step2log(mystep)
+runstep = 12
+if runstep in runsteps:
+    step2log(runstep)
   
     flagmanager(vis = splitmsfile,
                 mode = 'save',
                 versionname = 'BeforeBandpassCalibration')
   
-    mystep += 1
-
 
 ######################## Step 13 ###########################
 # Bandpass calibration
-if mystep == 13:
-    step2log(mystep)
+runstep = 13
+if runstep in runsteps:
+    step2log(runstep)
 
     refer_antenna = 'CM03' # change antenna matters?
   
@@ -349,23 +372,21 @@ if mystep == 13:
   
      #if applyonly != True: es.checkCalTable('uid___A002_X83f101_X165.ms.split.bandpass', msName='uid___A002_X83f101_X165.ms.split', interactive=False) 
   
-    mystep += 1
-
 ######################## Step 14 ###########################
 # Save flags before gain cal
-if mystep == 14:
-    step2log(mystep)
+runstep = 14
+if runstep in runsteps:
+    step2log(runstep)
   
     flagmanager(vis = splitmsfile,
                 mode = 'save',
                 versionname = 'BeforeGainCalibration')
     
-    mystep += 1
-
 ######################## Step 15 ###########################
 # Gain calibration
-if mystep == 15:
-    step2log(mystep)
+runstep = 15
+if runstep in runsteps:
+    step2log(runstep)
 
     #refer_antenna = 'CM03' # change antenna matters?
 
@@ -409,23 +430,21 @@ if mystep == 15:
   
     #if applyonly != True: es.fluxscale2(caltable = 'uid___A002_X83f101_X165.ms.split.ampli_inf', removeOutliers=True, msName='uid___A002_X83f101_X165.ms', writeToFile=True, preavg=10000)
   
-    mystep += 1
-
 ######################## Step 16 ###########################
 # Save flags before applycal
-if mystep == 16:
-    step2log(mystep)
+runstep = 16
+if runstep in runsteps:
+    step2log(runstep)
   
     flagmanager(vis = splitmsfile,
                 mode = 'save',
                 versionname = 'BeforeApplycal')
   
-    mystep += 1
-
 ######################## Step 17 ###########################
 # Application of the bandpass and gain cal tables
-if mystep == 17:
-    step2log(mystep)
+runstep = 17
+if runstep in runsteps:
+    step2log(runstep)
 
     for i in ['0', '2']: # J1427-4206,Mars
         applycal(vis = splitmsfile,
@@ -456,7 +475,6 @@ if mystep == 17:
              calwt = False,
              flagbackup = False)
   
-    mystep += 1
     if plot_results:
         check_cal(vis=splitmsfile, fdmspw='0', calibrator_fields=['0','2','3'], 
                   refant=refer_antenna, 
@@ -467,8 +485,9 @@ if mystep == 17:
 
 ######################## Step 18 ###########################
 # Split out corrected column
-if mystep == 18:
-    step2log(mystep)
+runstep = 18
+if runstep in runsteps:
+    step2log(runstep)
 
     os.system('rm -rf {}.calibrated'.format(splitmsfile)) 
     split(vis = splitmsfile,
