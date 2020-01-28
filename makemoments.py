@@ -1,11 +1,64 @@
+# run inside CASA 
+
+# USAGE: 
+# makemoms(filename,channel_range)
 # Example:: 
 # execfile('makemoments.py') 
-# makemoms('cube_CO65_contsub_selfcal_image.fits')
+# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510')
 
 import os
 import glob
+from astropy.io import fits
+from matplotlib import pyplot as plt
+from scipy      import ndimage
+from matplotlib import pyplot as plt
+from scipy      import ndimage
+from astropy.utils.console import ProgressBar
 
-def makemoms(fitsfilename): 
+
+def flagdwarfs(filename):
+
+    filename = filename 
+    cube     = fits.open(filename)
+    header   = cube[0].header
+    mask     = cube[0].data > 0 # * noise[0].data
+   
+    # This is to find connected components in an array
+    # https://scipy-lectures.org/intro/scipy/auto_examples/plot_connect_measurements.html
+    # by default, it is 2-D array. However, I found this to adopt to 3-D cubes
+    # https://stackoverflow.com/questions/36917944/label-3d-numpy-array-with-scipy-ndimage-label
+    
+    str_3D = np.array([[[0, 0, 0],
+                        [0, 0, 0],
+                        [0, 0, 0]],
+                      [[0, 1, 0],
+                        [1, 1, 1],
+                        [0, 1, 0]],
+                      [[0, 0, 0],
+                        [0, 0, 0],
+                        [0, 0, 0]]],
+                      dtype='uint8')
+    
+    labels, nb = ndimage.label(mask,structure=str_3D)
+    sig        = cube[0].data
+    
+    Print("Eliminating 3-D structures with less than six connected pixels (in 3-D).")
+    with ProgressBar(nb) as bar:
+        for i in xrange(nb):
+            bar.update()
+            sl = ndimage.find_objects(labels==i)
+        #   print(i)
+            if sig[sl[0]].size < 6:
+                sig[sl[0]] = np.NaN
+    
+    hdu = fits.PrimaryHDU(header=header,data=sig)
+    hdu.writeto('flagged.fits',overwrite=True)
+
+
+
+
+
+def makemoms(fitsfilename,chans): 
     imgname     = fitsfilename[0:-4]+"image"
     outputname  = fitsfilename[0:-5]+"_mom0.fits"
     outputname1 = fitsfilename[0:-5]+"_mom1.fits"
@@ -42,17 +95,29 @@ def makemoms(fitsfilename):
     ia.open(imgname)
     ia.calcmask(mask=str(sm_sm_img)+" > "+str(up_cutoff),name='masked_img')
     ia.close()
+    
+    os.system('rm -rf file_w_dwarfs.fits flagged.fits img_wo_dwarfs.im') 
+    exportfits(imagename=imgname,fitsimage='file_w_dwarfs.fits')
+    flagdwarfs('file_w_dwarfs.fits')
+    importfits(fitsimage='flagged.fits',imagename='img_wo_dwarfs.im')
+    imgname = 'img_wo_dwarfs.im'
 
     # -- Make moment0 image, using the masked, original resolution, PB-corrected datacube. 
     #  Selecting 16~40 channel number is the velocity range of about from 281~291 km/s  
-    os.system("rm -rf image.mom0 ")
-    immoments( imagename=imgname,chans='',outfile='image.mom0') 
+#   chans='485~510'
+    os.system("rm -rf image.mom0 mom0.fits")
+    outputname ='mom0.fits'
+    immoments( imagename=imgname,moments=0,chans=chans,outfile='image.mom0') 
     exportfits(imagename='image.mom0',fitsimage=outputname,overwrite=True)
-    os.system("rm -rf image.mom1 ")
-    immoments( imagename=imgname,moments=1,chans='',outfile='image.mom1') 
+
+    os.system("rm -rf image.mom1 mom1.fits")
+    outputname ='mom1.fits'
+    immoments( imagename=imgname,moments=1,chans=chans,outfile='image.mom1') 
     exportfits(imagename='image.mom1',fitsimage=outputname,overwrite=True)
-    os.system("rm -rf image.mom2 ")
-    immoments( imagename=imgname,moments=2,chans='',outfile='image.mom2') 
+
+    os.system("rm -rf image.mom2 mom2.fits")
+    outputname ='mom2.fits'
+    immoments( imagename=imgname,moments=2,chans=chans,outfile='image.mom2') 
     exportfits(imagename='image.mom2',fitsimage=outputname,overwrite=True)
     
       
