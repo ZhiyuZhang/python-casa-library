@@ -1,3 +1,8 @@
+# Purpose: 
+# 1. Make datacubes with filtered masks (or semi-) automatically. 
+# 2. Flag small (less than beamsize), untrusted (sometimes with crazy values) structures before making moment maps. 
+
+# NOTE:
 # run inside CASA 
 
 # USAGE: 
@@ -7,6 +12,11 @@
 # Example:: 
 # execfile('makemoments.py') 
 # makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',10)
+
+# Author: Zhi-Yu Zhang
+# Email: pmozhang@gmail.com
+# History:
+#   29 Jan 2020, first version updated by Zhiyu
 
 import os
 import glob
