@@ -1,10 +1,12 @@
 # run inside CASA 
 
 # USAGE: 
-# makemoms(filename,channel_range)
+# makemoms(filename,channel_range,Npix)
+# Here channel_range is the channel range to make moment maps
+# Npix is the number of connected pixels, below which the structure will be flagged 
 # Example:: 
 # execfile('makemoments.py') 
-# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510')
+# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',10)
 
 import os
 import glob
@@ -16,7 +18,7 @@ from scipy      import ndimage
 from astropy.utils.console import ProgressBar
 
 
-def flagdwarfs(filename):
+def flagdwarfs(filename,Npix):
 
     filename = filename 
     cube     = fits.open(filename)
@@ -41,14 +43,15 @@ def flagdwarfs(filename):
     
     labels, nb = ndimage.label(mask,structure=str_3D)
     sig        = cube[0].data
-    
-    Print("Eliminating 3-D structures with less than six connected pixels (in 3-D).")
+    print("=========================================================================")
+    print("|Eliminating 3-D structures with less than six connected pixels (in 3-D).|")
+    print("=========================================================================")
     with ProgressBar(nb) as bar:
         for i in xrange(nb):
             bar.update()
             sl = ndimage.find_objects(labels==i)
         #   print(i)
-            if sig[sl[0]].size < 6:
+            if sig[sl[0]].size < Npix:
                 sig[sl[0]] = np.NaN
     
     hdu = fits.PrimaryHDU(header=header,data=sig)
@@ -58,7 +61,7 @@ def flagdwarfs(filename):
 
 
 
-def makemoms(fitsfilename,chans): 
+def makemoms(fitsfilename,chans,Npix): 
     imgname     = fitsfilename[0:-4]+"image"
     outputname  = fitsfilename[0:-5]+"_mom0.fits"
     outputname1 = fitsfilename[0:-5]+"_mom1.fits"
@@ -88,7 +91,7 @@ def makemoms(fitsfilename,chans):
 
     # -- define cutoff to be 3.5 sigma from the convolved datacube  
     #  This can be tuned, for optimising the final moment-0 map. 
-    up_cutoff = 2 * imstat(sm_sm_img)['rms'][0]
+    up_cutoff = 1.5 * imstat(sm_sm_img)['rms'][0]
 
     # --  make mask using up_cutoff on the smoothed, non-PB corrected datacube,  and apply the mask to the original, unmasked, PB corrected datacube.
     os.system("rm -rf mask*")
@@ -98,13 +101,13 @@ def makemoms(fitsfilename,chans):
     
     os.system('rm -rf file_w_dwarfs.fits flagged.fits img_wo_dwarfs.im') 
     exportfits(imagename=imgname,fitsimage='file_w_dwarfs.fits')
-    flagdwarfs('file_w_dwarfs.fits')
+    flagdwarfs('file_w_dwarfs.fits',Npix)
     importfits(fitsimage='flagged.fits',imagename='img_wo_dwarfs.im')
     imgname = 'img_wo_dwarfs.im'
+    exportfits(imagename=imgname,fitsimage='file_wo_dwarfs.fits',overwrite=True)
+
 
     # -- Make moment0 image, using the masked, original resolution, PB-corrected datacube. 
-    #  Selecting 16~40 channel number is the velocity range of about from 281~291 km/s  
-#   chans='485~510'
     os.system("rm -rf image.mom0 mom0.fits")
     outputname ='mom0.fits'
     immoments( imagename=imgname,moments=0,chans=chans,outfile='image.mom0') 
