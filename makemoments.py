@@ -44,7 +44,7 @@ def flagdwarfs(filename,Npix):
     labels, nb = ndimage.label(mask,structure=str_3D)
     sig        = cube[0].data
     print("=========================================================================")
-    print("|Eliminating 3-D structures with less than six connected pixels (in 3-D).|")
+    print("|Eliminating 3-D structures with less than Npix connected pixels (in 3-D).|")
     print("=========================================================================")
     with ProgressBar(nb) as bar:
         for i in xrange(nb):
