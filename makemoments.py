@@ -1,8 +1,3 @@
-# Purpose: 
-# 1. Make datacubes with filtered masks (or semi-) automatically. 
-# 2. Flag small (less than beamsize), untrusted (sometimes with crazy values) structures before making moment maps. 
-
-# NOTE:
 # run inside CASA 
 
 # USAGE: 
@@ -12,11 +7,6 @@
 # Example:: 
 # execfile('makemoments.py') 
 # makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',10)
-
-# Author: Zhi-Yu Zhang
-# Email: pmozhang@gmail.com
-# History:
-#   29 Jan 2020, first version updated by Zhiyu
 
 import os
 import glob
@@ -125,12 +115,12 @@ def makemoms(fitsfilename,chans,Npix):
 
     os.system("rm -rf image.mom1 mom1.fits")
     outputname ='mom1.fits'
-    immoments( imagename=imgname,moments=1,chans=chans,outfile='image.mom1') 
+    immoments( imagename=imgname,moments=1,chans=chans,outfile='image.mom1',excludepix=[-100.,0.0]) 
     exportfits(imagename='image.mom1',fitsimage=outputname,overwrite=True)
 
     os.system("rm -rf image.mom2 mom2.fits")
     outputname ='mom2.fits'
-    immoments( imagename=imgname,moments=2,chans=chans,outfile='image.mom2') 
+    immoments( imagename=imgname,moments=2,chans=chans,outfile='image.mom2',excludepix=[-100.,0.0]) 
     exportfits(imagename='image.mom2',fitsimage=outputname,overwrite=True)
     
       
