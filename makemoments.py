@@ -23,7 +23,13 @@ def flagdwarfs(filename,Npix):
     filename = filename 
     cube     = fits.open(filename)
     header   = cube[0].header
-    mask     = cube[0].data > 0 # * noise[0].data
+    if len(cube[0].data.shape) ==4:
+        sig = cube[0].data[0,:]
+        mask= cube[0].data [0,:]> 0 # * noise[0].data
+    else:
+        sig = cube[0].data
+        mask= cube[0].data > 0 # * noise[0].data
+
    
     # This is to find connected components in an array
     # https://scipy-lectures.org/intro/scipy/auto_examples/plot_connect_measurements.html
@@ -42,7 +48,6 @@ def flagdwarfs(filename,Npix):
                       dtype='uint8')
     
     labels, nb = ndimage.label(mask,structure=str_3D)
-    sig        = cube[0].data
     print("=========================================================================")
     print("|Eliminating 3-D structures with less than Npix connected pixels (in 3-D).|")
     print("=========================================================================")
@@ -91,7 +96,7 @@ def makemoms(fitsfilename,chans,Npix):
 
     # -- define cutoff to be 3.5 sigma from the convolved datacube  
     #  This can be tuned, for optimising the final moment-0 map. 
-    up_cutoff = 1.5 * imstat(sm_sm_img)['rms'][0]
+    up_cutoff = 3 * imstat(sm_sm_img)['rms'][0]
 
     # --  make mask using up_cutoff on the smoothed, non-PB corrected datacube,  and apply the mask to the original, unmasked, PB corrected datacube.
     os.system("rm -rf mask*")
