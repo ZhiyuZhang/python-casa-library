@@ -91,6 +91,13 @@ def locating_flag(logfile, n=5):
     for item in match_stat:
         print("Statistics for {}:\n{}\n".format(item, pretty_output(Counter(match_stat[item]).most_common(n))))
 
+    # generate flagdata command
+    flag_baseline = ''
+    for baseline in Counter(match_stat['baselines']).most_common(n):
+        flag_baseline += "{};".format(baseline[0])
+    flag_corr = Counter(match_stat['corrs']).most_common(1)[0]
+
+    print("flagdata(vis='', antenna='{}', corr='{}')".format(flag_baseline[:-1], flag_corr[0]))
 
 if __name__ == '__main__':
     locating_flag(casalog.logfile())
