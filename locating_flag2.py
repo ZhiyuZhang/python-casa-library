@@ -74,7 +74,7 @@ def locating_flag(logfile, n=5):
             n_select_end = ind
             break
 
-    match_stat = {'ants':[], 'baselines':[], 'spws':[], 'corrs':[]}
+    match_stat = {'ants':[], 'baselines':[], 'spws':[], 'corrs':[], 'chans':[]}
     ants_all = []
     baselines_all = []
 
@@ -87,6 +87,7 @@ def locating_flag(logfile, n=5):
             map(lambda x:match_stat['baselines'].append(x[0]+'&'+x[1]), [[ant1, ant2]])
             match_stat['corrs'].append(info_matched['corr'])
             match_stat['spws'].append(info_matched['spw'])
+            match_stat['chans'].append(info_matched['chan'])
 
     for item in match_stat:
         print("Statistics for {}:\n{}\n".format(item, pretty_output(Counter(match_stat[item]).most_common(n))))
