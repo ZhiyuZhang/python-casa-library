@@ -1,6 +1,6 @@
 # funtion to identify flagging data from the output in the logfile
 
-# Author: Zhi-Yu Zhang
+# Author: Zhi-Yu Zhang, Jianhang Chen
 # Email: pmozhang@gmail.com 
 # History:
 #   21 Mar 2019, update by Zhiyu
