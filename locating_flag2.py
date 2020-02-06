@@ -27,7 +27,7 @@ def match_info(info_line, debug=False):
     """
     match_list = OrderedDict()
     match_list['scan']    = 'Scan=(?P<scan>\d+)\s'
-    match_list['field']   = 'Field=(?P<field>[\w\s]+)\s\[(?P<field_id>\d+)\]\s'
+    match_list['field']   = 'Field=(?P<field>[\w\s+-]+)\s\[(?P<field_id>\d+)\]\s'
     match_list['time']    = 'Time=(?P<time>[\w/:.]+)\s'
     match_list['baseline']= 'BL=(?P<ant1>\w+)@\w+\s&\s(?P<ant2>\w+)@\w+\s\[[\d&]+\]\s'
     match_list['spw']     = 'Spw=(?P<spw>\d+)\s'
