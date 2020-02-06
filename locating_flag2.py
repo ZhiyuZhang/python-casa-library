@@ -86,7 +86,8 @@ def locating_flag(logfile, n=5):
             ant1 = info_matched['ant1']
             ant2 = info_matched['ant2']
             map(match_stat['ants'].append, [ant1, ant2])
-            map(lambda x:match_stat['baselines'].append(x[0]+'&'+x[1]), [[ant1, ant2]])
+            map(lambda x:match_stat['baselines'].append(x[0]+'&'+x[1]), 
+                         [sorted([ant1, ant2])])
             match_stat['corrs'].append(info_matched['corr'])
             match_stat['spws'].append(info_matched['spw'])
             match_stat['chans'].append(info_matched['chan'])
