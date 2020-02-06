@@ -4,10 +4,6 @@
 
 # Example:  
 # execfile('locating_flag2.py') 
-# or 
-# simply run: 
-# import * from locating_flag2
-# locating_flag()
 
 # Author: Zhi-Yu Zhang, Jianhang Chen
 # Email: pmozhang@gmail.com 

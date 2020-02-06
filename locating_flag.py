@@ -21,6 +21,8 @@ import os
 import glob
 from   collections import Counter
 
+version = '0.0.3'
+
 def locating_flag(logfile):
     string       = open(logfile,'rU')
     AllLines     = str(string.readlines())
