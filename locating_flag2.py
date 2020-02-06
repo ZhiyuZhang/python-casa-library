@@ -18,7 +18,7 @@ def match_info(info_line, debug=False):
     """
     match_list = OrderedDict()
     match_list['scan']    = 'Scan=(?P<scan>\d+)\s'
-    match_list['field']   = 'Field=(?P<field>[\w\s]+)\s\[(?P<field_id>\d+)\]\s'
+    match_list['field']   = 'Field=(?P<field>[\w\s+-]+)\s\[(?P<field_id>\d+)\]\s'
     match_list['time']    = 'Time=(?P<time>[\w/:.]+)\s'
     match_list['baseline']= 'BL=(?P<ant1>\w+)@\w+\s&\s(?P<ant2>\w+)@\w+\s\[[\d&]+\]\s'
     match_list['spw']     = 'Spw=(?P<spw>\d+)\s'
@@ -59,6 +59,8 @@ def locating_flag(logfile, n=5):
         the number of most common outputs
 
     """
+    n_select_start = 0
+    n_select_end = 0
     p_select = re.compile('Found (?P<n_select>\d+) points \((?P<n_unflagged>\d+) unflagged\)')
     p_overselect = re.compile('Only first (?P<n_over>\d+) points reported above')
     with open(logfile) as logfile:
@@ -96,9 +98,10 @@ def locating_flag(logfile, n=5):
     flag_baseline = ''
     for baseline in Counter(match_stat['baselines']).most_common(n):
         flag_baseline += "{};".format(baseline[0])
-    flag_corr = Counter(match_stat['corrs']).most_common(1)[0]
+    # flag_corr = Counter(match_stat['corrs']).most_common(1)[0]
+    # flag_chan = Counter(match_stat['chans']).most_common(1)[0]
 
-    print("flagdata(vis='', antenna='{}', corr='{}')".format(flag_baseline[:-1], flag_corr[0]))
+    print("flagdata(vis='', mode='manual', antenna='{}', flagbackup=False)".format(flag_baseline[:-1]))
 
 if __name__ == '__main__':
     locating_flag(casalog.logfile())
