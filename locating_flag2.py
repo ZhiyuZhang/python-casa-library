@@ -1,4 +1,13 @@
-# funtion to identify flagging data from the output in the logfile
+# Aim: A function for identifying tagged data (by plotms) to flag, read from the output in the logfile.
+# Usage: under CASA;  version (no constraints)
+# Within CASA:  plotms, select a region, click 'locate'. Then the selected base information will shown in the log file and the message window.  Then the script will read the most frequent baselines and their statistics, and output flagdata command for your choice. 
+
+# Example:  
+# execfile('locating_flag2.py') 
+# or 
+# simply run: 
+# import * from locating_flag2
+# locating_flag()
 
 # Author: Zhi-Yu Zhang, Jianhang Chen
 # Email: pmozhang@gmail.com 
