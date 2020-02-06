@@ -21,8 +21,6 @@ import os
 import glob
 from   collections import Counter
 
-version = '0.0.3'
-
 def locating_flag(logfile):
     string       = open(logfile,'rU')
     AllLines     = str(string.readlines())
@@ -68,7 +66,7 @@ def locating_flag(logfile):
 #   print("-----------------")
 #   print(topten)
     print("-----------------")
-    print("Most frequent baselines and their frequencies: ")
+    print("Most frequent antennas (NOT baselines) and their frequencies: ")
     print("                        ")
     
 
@@ -81,8 +79,10 @@ def locating_flag(logfile):
 
     print("                        ")
     print("-----------------")
+    print("Please complete your script, by adding info of correlations, spw, time, etc.")
+    print("-----------------")
     for idx in range(0, len(most_baselines)):
-        print("flagdata(vis, mode='manual',antenna='"+str(most_baselines[idx])+"')")
+        print("flagdata(vis, mode='manual',antenna='"+str(most_baselines[idx])+"',flagbackup=False)")
     print("-----------------")
 
 
