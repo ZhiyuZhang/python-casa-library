@@ -9,7 +9,14 @@ import os
 import random
 import numpy as np
 from casa import tbtool, plotms, plotants
-import analysisUtils as aU
+
+try:
+    import analysisUtils as aU
+    has_au = True
+except:
+    print('Warning: no analysisUtil found, some functions may not work')
+    has_au = False
+
 
 def spw_expand(spwstr, mapfun=None):
     """expand the spw string into a list
@@ -107,9 +114,9 @@ def group_antenna(antenna_list=[], refant=None, subgroup_member=6):
  
     return subgroups
 
-def check_info(vis=None, showgui=False, plotdir='./plots', sciencespws='',
+def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                show_ants=True, show_mosaic=True, show_uvcoverage=True,
-               show_allobs=True):
+               show_time=True, show_channel=True, show_elevation=True):
     """ plot the basic information of the observation.
 
     Plots include: antenna positions, UV coverage, mosaic coverage(if possible)
@@ -131,31 +138,52 @@ def check_info(vis=None, showgui=False, plotdir='./plots', sciencespws='',
     show_uvcoverage : bool
         plot the uv coverage of different field, or only the science target if 
         sciencespws is specified
-    show_allobs : bool
+    show_time : bool
         plot the all the amp vs time
+    show_channel : bool
+        plot the all the amp vs channel
 
     """
     os.system('mkdir -p {}/info'.format(plotdir))
     plotdir = plotdir + '/info'
 
     if show_ants:
-        plotants(vis=vis, figfile='{}/antenna_position.png'.format(plotdir))
+        # Checking antenna position, choosing the reference antenna
+        print('Plotting antenna positions...')
+        plotants(vis=vis, figfile='{}/antpos.png'.format(plotdir))
 
-    if show_mosaic:
+    if show_mosaic and has_au:
+        # For selecting phase center
+        print("Plotting mosaic...")
         aU.plotmosaic(vis, figfile='{}/mosaic.png'.format(plotdir))
 
     if show_uvcoverage:
+        print("Plotting u-v coverage...")
         plotms(vis=vis, xaxis='U', yaxis='V', coloraxis='field', 
-               spw=sciencespws, showgui=showgui, 
+               spw=spw, showgui=showgui, 
                plotfile='{}/uvcoverage.png'.format(plotdir),
                overwrite=True)
-    if show_allobs:
-        plotms(vis=vis, xaxis='time', yaxis='amp', 
-               avgchannel='1e8', avgtime='100',
-               coloraxis='field',
-               showgui=showgui, 
-               plotfile='{}/all_observations.png'.format(plotdir),
+    if show_elevation:
+        print("Plotting elevation with time...")
+        # Checking the evevation, determine the need of elivation calibration
+        plotms(vis=vis, xaxis='time', yaxis='elevation', spw=spw,
+               avgchannel='1e6', coloraxis='field', 
+               plotfile='{}/elevation.png'.format(plotdir), 
+               showgui=showgui, overwrite=True)
+    if show_time:
+        print("Plotting amplitude vs time...")
+        # checking the valid timerange of data
+        plotms(vis=vis, xaxis='time', yaxis='amplitude', avgchannel='1e6', 
+               spw=spw, coloraxis='field', showgui=showgui,
+               plotfile='{}/amp_time.png'.format(plotdir),
                overwrite=True)
+    if show_channel:
+        print("Plotting amplitude vs channel")
+        plotms(vis=vis, xaxis='channel', yaxis='amplitude', avgtime='1e6', 
+               spw=spw, coloraxis='field',
+               plotfile='{}/amp_channel.png'.format(plotdir), 
+               showgui=showgui, overwrite=True)
+
 
 def check_tsys(vis=None, tdmspws=None, ants_subgroups=None, gridcols=2, 
                gridrows=3, plotdir='./plots', showgui=False):
