@@ -9,34 +9,43 @@
 
 
 import re
-from collections import OrderedDict, Counter
+from collections import Counter
 
 version = '0.0.3'
 
 def match_info(info_line, debug=False):
     """match the info of plotms selection
     """
-    match_list = OrderedDict()
-    match_list['scan']    = 'Scan=(?P<scan>\d+)\s'
-    match_list['field']   = 'Field=(?P<field>[\w\s+-]+)\s\[(?P<field_id>\d+)\]\s'
-    match_list['time']    = 'Time=(?P<time>[\w/:.]+)\s'
-    match_list['baseline']= 'BL=(?P<ant1>\w+)@\w+\s&\s(?P<ant2>\w+)@\w+\s\[[\d&]+\]\s'
-    match_list['spw']     = 'Spw=(?P<spw>\d+)\s'
-    match_list['chan']    = 'Chan=(?P<chan>(\d+)|(<\d+~\d+>))\s'
-    match_list['freq']    = '(Avg\s)*Freq=(?P<freq>[\d.]+)\s'
-    match_list['corr']    = 'Corr=(?P<corr>\w+)\s'
+    match_list = {}
+    match_list['scan']  = 'Scan=(?P<scan>\d+)\s'
+    match_list['field'] = 'Field=(?P<field>[\w\s+-]+)\s\[(?P<field_id>\d+)\]\s'
+    match_list['time']  = 'Time=(?P<time>[\w/:.]+)\s'
+    match_list['ant1']  = 'BL=(?P<ant1>\w+)@\w+\s&\s\w+@\w+\s\[[\d&]+\]\s'
+    match_list['ant2']  = 'BL=\w+@\w+\s&\s(?P<ant2>\w+)@\w+\s\[[\d&]+\]\s'
+    match_list['spw']   = 'Spw=(?P<spw>\d+)\s'
+    match_list['chan']  = 'Chan=(?P<chan>(\d+)|(<\d+~\d+>))\s'
+    match_list['freq']  = '(Avg\s)*Freq=(?P<freq>[\d.]+)\s'
+    match_list['corr']  = 'Corr=(?P<corr>\w+)\s'
+    match_list['poln']  = 'Corr=(?P<corr>\w+)\s'
 
-    if debug:
-        for item in match_list:
-            p_match = re.compile(match_list[item])
-            print("{:<10}: {}".format(item, p_match.search(info_line)))
+    info_matched = {}
+    for item in match_list:
+        p_match = re.compile(match_list[item])
+        try:
+            p_matched = p_match.search(info_line).groupdict()
+            info_matched.update({item: p_matched[item]})
+        except:
+            if debug:
+                print("Failed: {:<10}".format(item))
+    # recover the baseline from two antennas
+    try:
+        two_ants = sorted([info_matched['ant1'], info_matched['ant2']])
+        info_matched['baseline'] = two_ants[0] + '&' + two_ants[1]
+    except:
+        if debug:
+            print("Failed to generate the baseline!")
 
-    p_string = 'PlotMS::locate\+\s'
-    for value in match_list.values():
-        p_string = p_string + value
-    p_info = re.compile(r"{}".format(p_string))
-    info_matched = p_info.search(info_line)
-    return info_matched.groupdict()
+    return info_matched
 
 def pretty_output(counter):
     """make Couter output more readable
@@ -48,7 +57,7 @@ def pretty_output(counter):
     return output
 
 
-def locating_flag(logfile, n=5):
+def locating_flag(logfile, n=5, debug=False):
     """Searching flag information in logfile
 
     Parameters
@@ -76,24 +85,19 @@ def locating_flag(logfile, n=5):
             n_select_end = ind
             break
 
-    match_stat = {'ants':[], 'baselines':[], 'spws':[], 'corrs':[], 'chans':[]}
+    match_stat = {'ant1&ant2':[], 'baselines':[], 'spws':[], 'corrs':[], 
+                  'chans':[], 'scans':[], 'fields':[]}
     ants_all = []
     baselines_all = []
 
     for line in all_lines[n_select_start:n_select_end]:
-        info_matched = match_info(line)
-        if info_matched:
-            ant1 = info_matched['ant1']
-            ant2 = info_matched['ant2']
-            map(match_stat['ants'].append, [ant1, ant2])
-            map(lambda x:match_stat['baselines'].append(x[0]+'&'+x[1]), 
-                         [sorted([ant1, ant2])])
-            match_stat['corrs'].append(info_matched['corr'])
-            match_stat['spws'].append(info_matched['spw'])
-            match_stat['chans'].append(info_matched['chan'])
-
+        info_matched = match_info(line, debug=debug)
+        for item_stat in match_stat:
+            for item_info in info_matched:
+                if item_info in item_stat:
+                    match_stat[item_stat].append(info_matched[item_info])
     for item in match_stat:
-        print("Statistics for {}:\n{}\n".format(item, pretty_output(Counter(match_stat[item]).most_common(n))))
+        print("{}:\n{}\n".format(item, pretty_output(Counter(match_stat[item]).most_common(n))))
 
     # generate flagdata command
     flag_baseline = ''
