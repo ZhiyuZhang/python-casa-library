@@ -212,7 +212,7 @@ def check_tsys(vis=None, tdmspws=None, ants_subgroups=None, gridcols=2,
                    plotfile='{}/tsys/spw{}_tsys_vs_freq.page{}.png'.format(plotdir, spw, page))
 
 def check_cal(vis='', spw='', cal_fields='', refant='', 
-              plot_overall=True, ydatacolumn='corrected', target_field=None,
+              plot_overall=True, ydatacolumn='corrected', target_field='',
               plot_freq=True, plot_time=True, plot_uvdist=True,
               gridrows=2, gridcols=3,
               overwrite=True, showgui=False, dpi=600, plotdir='./plots'):
