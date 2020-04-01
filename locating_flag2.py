@@ -73,6 +73,7 @@ def locating_flag(logfile, n=5, debug=False):
     n_select_end = 0
     p_select = re.compile('Found (?P<n_select>\d+) points \((?P<n_unflagged>\d+) unflagged\)')
     p_overselect = re.compile('Only first (?P<n_over>\d+) points reported above')
+    
     with open(logfile) as logfile:
         all_lines = logfile.readlines()
     for ind in range(len(all_lines) - 1, 0, -1):
@@ -81,6 +82,7 @@ def locating_flag(logfile, n=5, debug=False):
             p_overmatched = p_overselect.search(all_lines[(ind - 1)])
             if p_overmatched:
                 n_select_start = ind - int(p_overmatched.groupdict()['n_over'])
+                print("Warning: only show the {} lines in the logs!".format(p_overmatched.groupdict()['n_over']))
             else:
                 n_select_start = ind - int(p_matched.groupdict()['n_select'])
             n_select_end = ind
