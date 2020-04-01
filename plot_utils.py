@@ -212,9 +212,9 @@ def check_tsys(vis=None, tdmspws=None, ants_subgroups=None, gridcols=2,
                    plotfile='{}/tsys/spw{}_tsys_vs_freq.page{}.png'.format(plotdir, spw, page))
 
 def check_cal(vis='', spw='', cal_fields='', refant='', 
-              plot_overall=False, ydatacolumn='corrected', target_field=None,
+              plot_overall=True, ydatacolumn='corrected', target_field=None,
               plot_freq=True, plot_time=True, plot_uvdist=True,
-              plot_target=False, gridrows=2, gridcols=3,
+              gridrows=2, gridcols=3,
               overwrite=True, showgui=False, dpi=600, plotdir='./plots'):
     """check the calibrated data after applycal
     The wrapped tools based on `plotms` for manual calibration.
@@ -352,7 +352,7 @@ def check_cal(vis='', spw='', cal_fields='', refant='',
                                          plotdir, ydatacolumn, field, spw_single, yaxis, page),
                                dpi = dpi, overwrite=overwrite)
 
-    if plot_uvdist and cal_fields is not None:
+    if plot_uvdist and cal_fields != '':
         # well behaved point source should show flat amplitude with uvdist
         print("Plot uvdist related calibration for {} ...".format(cal_fields))
         os.system('mkdir -p {}/uvdist/'.format(plotdir))
@@ -363,25 +363,31 @@ def check_cal(vis='', spw='', cal_fields='', refant='',
                    plotfile='{}/uvdist/field{}_amp_vs_uvdist.png'.format(plotdir, field),
                    dpi=dpi, overwrite=overwrite, showgui=showgui)
        
-    if plot_target and target_field != '':
-        if target_field is None:
-            raise ValueError("You must give the field of your science target `target_field`!")
+    if target_field != '':
         print("Giving the science target a glance ...")
         os.system('mkdir -p {}/target/'.format(plotdir))
         for field in target_field.split(','):
-            print(">> Plotting amplitude vs uvdist of target...")
-            plotms(vis=vis, xaxis='uvdist', yaxis='amp',
-                   ydatacolumn=ydatacolumn, field=field,
-                   avgchannel='1e8', coloraxis='corr',
-                   plotfile = '{}/target/target_amp_vs_uvdist.png'.format(plotdir),
-                   showgui=showgui, dpi=dpi, overwrite=overwrite)
-            print(">> Plotting amplitude vs time and frequency...")
+            if plot_uvdist:
+                print(">> Plotting amplitude vs uvdist for science target...")
+                plotms(vis=vis, xaxis='uvdist', yaxis='amp',
+                       ydatacolumn=ydatacolumn, field=field,
+                       avgchannel='1e8', coloraxis='corr',
+                       plotfile = '{}/target/target_amp_vs_uvdist.png'.format(plotdir),
+                       showgui=showgui, dpi=dpi, overwrite=overwrite)
             for spw in spw.split(','):
-                for xaxis in ['freq', 'time']:
-                    plotms(vis=vis, xaxis=xaxis, yaxis='amp', spw=spw,
+                if plot_freq:
+                    print(">> Plotting amplitude vs frequency for science target...")
+                    plotms(vis=vis, xaxis='freq', yaxis='amp', spw=spw,
                            ydatacolumn=ydatacolumn, field=field,
                            avgtime='1e8', avgscan=True, coloraxis='corr',
-                           plotfile='{}/target/target_amp_vs_{}.png'.format(plotdir, xaxis),
+                           plotfile='{}/target/target_amp_vs_{}.png'.format(plotdir, 'freq'),
+                           showgui=showgui, dpi=dpi, overwrite=overwrite)
+                if plot_time:
+                    print(">> Plotting amplitude vs time for science target...")
+                    plotms(vis=vis, xaxis='time', yaxis='amp', spw=spw,
+                           ydatacolumn=ydatacolumn, field=field,
+                           avgchannel='1e8', avgscan=True, coloraxis='corr',
+                           plotfile='{}/target/target_amp_vs_{}.png'.format(plotdir, 'time'),
                            showgui=showgui, dpi=dpi, overwrite=overwrite)
 
 def check_bandpass(fgcal='bpphase.gcal', fbcal='bandpass.bcal', 
