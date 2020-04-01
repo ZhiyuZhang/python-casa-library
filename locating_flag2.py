@@ -5,7 +5,8 @@
 # History:
 #   21 Mar 2019, update by Zhiyu
 #   30 Sep 2019, transfer into function from the original script, by Jianhang
-#    3 Dec 2019, match the logs by regex, Jianhang
+#    3 Dec 2019, match logs by regex, Jianhang
+#    1 Apr 2020, sort the ouput including more details
 
 
 import re
@@ -86,7 +87,7 @@ def locating_flag(logfile, n=5, debug=False):
             break
 
     match_stat = {'ant1&ant2':[], 'baselines':[], 'spws':[], 'corrs':[], 
-                  'chans':[], 'scans':[], 'fields':[]}
+            'chans':[], 'scans':[], 'fields':[], 'time':[]}
     ants_all = []
     baselines_all = []
 
