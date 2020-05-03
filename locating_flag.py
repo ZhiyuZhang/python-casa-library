@@ -36,8 +36,14 @@ def locating_flag(logfile):
 
     for line in LastSection.split('\\n'):
         if line.find('BL=')!=-1:
-           ant1  = re.compile("BL"    + b'(.*?)' + "&"    , re.S).findall(line)[0][1:].rstrip()
-           ant2  = re.compile("&"     + b'(.*?)' + "\["   , re.S).findall(line)[0][1:].rstrip()
+#          print("Both antennas are found")
+          
+           if line.find('@')!=-1:
+              search = "@"
+           else:
+              search = "&"
+           ant1  = re.compile("BL"    + b'(.*?)' + search    , re.S).findall(line)[0][1:].rstrip()
+           ant2  = re.compile("&"     + b'(.*?)' + search    , re.S).findall(line)[0][1:].rstrip()
            scan  = re.compile("Scan"  + b'(.*?)' + "Field", re.S).findall(line)[0][1:].rstrip()
            field = re.compile("Field" + b'(.*?)' + "\["   , re.S).findall(line)[0][1:].rstrip()
            time  = re.compile("Time"  + b'(.*?)' + "BL"   , re.S).findall(line)[0][1:].rstrip()
