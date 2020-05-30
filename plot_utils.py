@@ -2,7 +2,9 @@
 
 # by Jianhang Chen
 # cjhastro@gmail.com 
-# last update: 21 Mar 2019
+# History: 
+#   2019.03.21, release
+#   2020.04.11, update for less input parameters, drop dependence of analysisUtils
 
 
 import os
@@ -10,12 +12,6 @@ import random
 import numpy as np
 from casa import tbtool, plotms, plotants
 
-try:
-    import analysisUtils as aU
-    has_au = True
-except:
-    print('Warning: no analysisUtil found, some functions may not work')
-    has_au = False
 
 def group_antenna(vis, antenna_list=[], refant='', subgroup_member=6):
     """group a large number of antenna into small subgroup
@@ -109,10 +105,9 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
         print('Plotting antenna positions...')
         plotants(vis=vis, figfile='{}/antpos.png'.format(plotdir))
 
-    if show_mosaic and has_au and not os.path.exists('{}/mosaic.png'.format(plotdir)):
-        # For selecting phase center
-        print("Plotting mosaic...")
-        aU.plotmosaic(vis, figfile='{}/mosaic.png'.format(plotdir))
+    if show_mosaic:
+        # TODO, adapt the function from analysisUtils
+        pass
 
     if show_uvcoverage and not os.path.exists('{}/uvcoverage.png'.format(plotdir)):
         print("Plotting u-v coverage...")
@@ -135,12 +130,12 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                avgchannel='1e8', spw=spw, coloraxis='corr', ydatacolumn='data',
                plotfile='{}/bcal_{}_time.png'.format(plotdir, 'phase'),
                showgui=False, overwrite=overwrite)
-        # phase change with channel
+        # phase change with freq
         for spw_single in spw.split(','):
             for yaxis in ['amp']:
-                plotms(vis=vis, field=bcal_field, xaxis='channel', yaxis=yaxis, antenna=refant,
+                plotms(vis=vis, field=bcal_field, xaxis='freq', yaxis=yaxis, antenna=refant,
                        avgtime='1e8',spw=spw_single, coloraxis='corr', ydatacolumn='data',
-                       plotfile='{}/bcal_spw{}_{}_channel.png'.format(plotdir, spw_single, yaxis),
+                       plotfile='{}/bcal_spw{}_{}_freq.png'.format(plotdir, spw_single, yaxis),
                        showgui=False, overwrite=overwrite)
     if gcal_field:
         print('Plotting gain calibrator...')
@@ -412,9 +407,9 @@ def check_bandpass(fgcal='bpphase.gcal', fbcal='bandpass.bcal',
         subgroups = group_antenna(fbcal, subgroup_member=gridrows*gridcols)
         for page, antenna in enumerate(subgroups):
             for yaxis in ['amp', 'phase']:
-                plotms(vis=fbcal, gridrows=gridrows, gridcols=gridcols, xaxis='chan',
+                plotms(vis=fbcal, gridrows=gridrows, gridcols=gridcols, xaxis='freq',
                        yaxis=yaxis, antenna=antenna, iteraxis='antenna', coloraxis='corr',
-                       plotfile='{}/bandpass/phase_page{}.png'.format(plotdir, page),
+                       plotfile='{}/bandpass/{}_page{}.png'.format(plotdir, yaxis, page),
                        showgui=False, dpi=dpi, overwrite=True)
     else:
         print("Warning: you should give the correct bandpass calibration table! Set the fbcal parameter")
