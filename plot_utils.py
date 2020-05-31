@@ -68,8 +68,9 @@ def group_antenna(vis, antenna_list=[], refant='', subgroup_member=6):
 
 def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                show_ants=True, show_mosaic=False, show_uvcoverage=True,
-               show_elevation=True, bcal_field=None, gcal_field=None, 
-               target_field=None, refant='1', overwrite=True):
+               show_elevation=True, refant='1', overwrite=True,
+               bcal_field=None, gcal_field=None, target_field=None, 
+               field=''):
     """ plot the basic information of the observation.
 
     Plots include: antenna positions, UV coverage, mosaic coverage(if possible)
@@ -80,22 +81,21 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
         measurement file
     showgui : bool
         show the plot window, (the plotmosaic does not support yet)
-    info_dir : str
+    plotdir : str
         the base directory for all the info plots
-    sciencespws : str
-        the spw related to the science target
-    show_mosaic : bool
-        plot the relative positions of the mosaic
+    spw : str
+        the spectral windows, if unset or empty string all the spws will plot at the same time;
+        specify the spws in stings can plot them one by one through the loop in spws.split(',')
     show_ants : bool
-        plot the positions of the antennae
+        plot the positions of the antennas
+    show_mosaic : bool
+        deprecated, need analysisUtils. Plot the relative positions of the mosaic
     show_uvcoverage : bool
-        plot the uv coverage of different field, or only the science target if 
-        sciencespws is specified
+        plot the uv coverage of different field. Also depends the field number
     show_time : bool
         plot the all the amp vs time
     show_channel : bool
         plot the all the amp vs channel
-
     """
     os.system('mkdir -p {}/info'.format(plotdir))
     plotdir = plotdir + '/info'
@@ -107,14 +107,15 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
 
     if show_mosaic:
         # TODO, adapt the function from analysisUtils
+        print("Warning, mosaic plot deprecated!")
         pass
 
-    if show_uvcoverage and not os.path.exists('{}/uvcoverage.png'.format(plotdir)):
-        print("Plotting u-v coverage...")
-        plotms(vis=vis, xaxis='U', yaxis='V', coloraxis='field', 
-               spw=spw, showgui=showgui, 
-               plotfile='{}/uvcoverage.png'.format(plotdir),
-               overwrite=overwrite)
+    # if show_uvcoverage and not os.path.exists('{}/uvcoverage.png'.format(plotdir)):
+        # print("Plotting u-v coverage...")
+        # plotms(vis=vis, xaxis='U', yaxis='V', coloraxis='field', 
+               # spw=spw, showgui=showgui, avgchannel='1e6', 
+               # plotfile='{}/all_uvcoverage.png'.format(plotdir),
+               # overwrite=overwrite)
     if show_elevation and not os.path.exists('{}/elevation.png'.format(plotdir)):
         print("Plotting elevation with time...")
         # Checking the evevation, determine the need of elivation calibration
@@ -124,22 +125,31 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                showgui=showgui, overwrite=overwrite)
     
     if bcal_field:
-        # phase change with time
         print('Plotting bandpass calibrator...')
+        plotms(vis=vis, xaxis='U', yaxis='V', field=bcal_field, 
+               spw=spw, showgui=showgui,avgchannel='1e6', 
+               plotfile='{}/bcal_uvcoverage.png'.format(plotdir),
+               overwrite=overwrite)
+
+        # phase change with time
         plotms(vis=vis, field=bcal_field, xaxis='time', yaxis='phase', antenna=refant,
                avgchannel='1e8', spw=spw, coloraxis='corr', ydatacolumn='data',
                plotfile='{}/bcal_{}_time.png'.format(plotdir, 'phase'),
                showgui=False, overwrite=overwrite)
         # phase change with freq
         for spw_single in spw.split(','):
-            for yaxis in ['amp']:
+            for yaxis in ['amp','phase']:
                 plotms(vis=vis, field=bcal_field, xaxis='freq', yaxis=yaxis, antenna=refant,
                        avgtime='1e8',spw=spw_single, coloraxis='corr', ydatacolumn='data',
                        plotfile='{}/bcal_spw{}_{}_freq.png'.format(plotdir, spw_single, yaxis),
                        showgui=False, overwrite=overwrite)
     if gcal_field:
         print('Plotting gain calibrator...')
-        for yaxis in ['amp']:
+        plotms(vis=vis, xaxis='U', yaxis='V', field=gcal_field, 
+               spw=spw, showgui=showgui,avgchannel='1e6', 
+               plotfile='{}/gcal_uvcoverage.png'.format(plotdir),
+               overwrite=overwrite)
+        for yaxis in ['amp','phase']:
             plotms(vis=vis, field=gcal_field, spw=spw, ydatacolumn='data',
                    xaxis='time', yaxis=yaxis, avgchannel='1e8', 
                    coloraxis='corr', showgui=showgui, antenna=refant,
@@ -147,11 +157,16 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                    overwrite=overwrite)
     if target_field:
         print('Plotting science target...')
+        plotms(vis=vis, xaxis='U', yaxis='V', field=target_field, 
+               spw=spw, showgui=showgui,avgchannel='1e6', 
+               plotfile='{}/target_uvcoverage.png'.format(plotdir),
+               overwrite=overwrite)
         plotms(vis=vis, xaxis='time', yaxis='amplitude', avgchannel='1e8', 
                spw=spw, field=target_field, coloraxis='corr', 
                antenna=refant, ydatacolumn='data',
                plotfile='{}/target_amp_time.png'.format(plotdir),
                showgui=showgui, overwrite=overwrite)
+    
 
 def check_tsys(vis=None, tdmspws=None, ants_subgroups=None, gridcols=2, 
                gridrows=3, plotdir='./plots', showgui=False):
