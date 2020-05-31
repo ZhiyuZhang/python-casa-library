@@ -70,7 +70,7 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                show_ants=True, show_mosaic=False, show_uvcoverage=True,
                show_elevation=True, refant='1', overwrite=True,
                bcal_field=None, gcal_field=None, target_field=None, 
-               field=''):
+               ):
     """ plot the basic information of the observation.
 
     Plots include: antenna positions, UV coverage, mosaic coverage(if possible)
@@ -80,22 +80,42 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
     vis : str
         measurement file
     showgui : bool
-        show the plot window, (the plotmosaic does not support yet)
+        show the plot window, the plotmosaic does not support yet, 
+        default: False
     plotdir : str
-        the base directory for all the info plots
+        the base directory for all the info plots. 
+        default: './plots'
     spw : str
         the spectral windows, if unset or empty string all the spws will plot at the same time;
         specify the spws in stings can plot them one by one through the loop in spws.split(',')
+        default: ''
     show_ants : bool
         plot the positions of the antennas
+        default: True
     show_mosaic : bool
         deprecated, need analysisUtils. Plot the relative positions of the mosaic
+        default: False
     show_uvcoverage : bool
         plot the uv coverage of different field. Also depends the field number
-    show_time : bool
-        plot the all the amp vs time
-    show_channel : bool
-        plot the all the amp vs channel
+        default: True
+    show_elevation : bool
+        plot the elevation with time for all the fields
+        default: True
+    refant : str
+        the reference antenna, set to '' to plot all the antennas
+        default: '1'
+    overwrite : bool
+        set to True to overwrite all the existing plots
+        default: True
+    bcal_field : str
+        the bandpass calibrator fields
+        default: None
+    gcal_field : str
+        the gain calibrator field
+        default: None
+    target_field : str
+        the target field
+        default: None
     """
     os.system('mkdir -p {}/info'.format(plotdir))
     plotdir = plotdir + '/info'
