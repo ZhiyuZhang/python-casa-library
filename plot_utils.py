@@ -186,7 +186,6 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                antenna=refant, ydatacolumn='data',
                plotfile='{}/target_amp_time.png'.format(plotdir),
                showgui=showgui, overwrite=overwrite)
-    
 
 def check_tsys(vis=None, tdmspws=None, ants_subgroups=None, gridcols=2, 
                gridrows=3, plotdir='./plots', showgui=False):
@@ -241,19 +240,13 @@ def check_tsys(vis=None, tdmspws=None, ants_subgroups=None, gridcols=2,
                    coloraxis='corr', antenna=antenna, showgui=showgui,
                    plotfile='{}/tsys/spw{}_tsys_vs_freq.page{}.png'.format(plotdir, spw, page))
 
-def check_cal(vis='', spw='', cal_fields='', refant='', 
-              plot_overall=True, ydatacolumn='corrected', target_field='',
+def check_cal(vis='', spw='', refant='', ydatacolumn='corrected',
+              cal_fields='', target_field='',
               plot_freq=True, plot_time=True, plot_uvdist=True,
-              gridrows=2, gridcols=3,
-              overwrite=True, showgui=False, dpi=600, plotdir='./plots'):
+              plot_overall=False, overwrite=True, showgui=False, 
+              gridrows=2, gridcols=3, dpi=600, plotdir='./plots'):
     """check the calibrated data after applycal
     The wrapped tools based on `plotms` for manual calibration.
-
-    The sugget way to use this program:
-
-    1. After Bandpasss Calibration, plot the rerult of frequency with 
-       detail='baseline' and refant defined.
-    2. After 
 
     Parameters
     ----------
@@ -261,57 +254,43 @@ def check_cal(vis='', spw='', cal_fields='', refant='',
         measurements file
     spw : str
         same as casa
+        default: ''
+    refant : str
+        the reference antenna, like 'CM03', 'DV48'
+        if the refant is specified, the iteration axis will change to baseline, otherwise it will iterate through antenna
+        default: ''
+    ydatacolumn : str
+        the ydatacolumn of `plotms`
+        default: 'corrected'
     cal_fileds : str
         a string contains all the fields of calibrators
         example: '0,2,3' or 'J1427-4206,Mars'
+        default: ''
     science_field : str
         the fields of the science target
         example: 'Cen*' or '4~22'
-    ydatacolumn : str
-        the ydatacolumn of `plotms`
-    ants : list
-        all the antennas to be included
-    refant : str
-        the reference antenna, like 'CM03', 'DV48'
-    bandpass_calibrator : str
-        the field of bandpass calibrator
-        example: '0' or 'J1427-4206'
-    phase_calibrator : str
-        the same as bandpass_calibrator but for bandpass
-    flux_calibrator : str
-        the same as bandpass_calibrator but for flux calibrator
-    plot_tsys : bool
-        plot the tsys calibration table, the filename should be vis+'.tsys'
-        require: `tdmspws`
     plot_freq : bool
         Plot the amplitude-vs-frequency, phase-vs-frequency for both data.
-        It is helpful to generate this kind of plot after the bandpass calibration.
-        If the datacube is really large, setting the detail='baseline' and the refant
-        can speed up the plots. If there is no problem with the baseline plots then
-        set the detail to 'antenna' or 'all' to look at others plots.
-
-        require: `fdmspw`, `refant`, `cal_fields`
+        default: True
     plot_time : bool
-        plot the amplitude-vs-time, phase-vs-time for both data column 
-        and corrected data column
-        require: `fdmspw`, `refant`, `cal_fields`
+        plot the amplitude-vs-time, phase-vs-time for both data column
+        default: True
     plot_uvdist : bool
-        plot amplitude-vs-uvdist 
-        require: `cal_fields`
-    plot_solutions : bool
-        plot bandpass calibration and gain calibration 
-        require: `flux_calibrator`, and with vis+'.banpass.cal', 
-                 vis+'.phase_inf.cal', vis+'flux.cal' availabe in current 
-                 directory
-    plot_target : bool
-        plot the amplitude-vs-amplitude and amplitude-vs-frequency for the 
-        science target
-        require: `science_field`
-    plot_bandpass : bool
-        the plot option to control the plotbandpass task. The default value is
-        false since plotbandpass always make casa crash
-    overwrite, showgui, dpi 
-        the same option for plotms, see casa document for more detail
+        plot amplitude vs uvdist 
+        default: True
+    plot_overall : bool
+        if true, all the antenna will be included in the plots, it is very time consuming for large dataset
+        default: False
+    overwrite : bool
+        default True
+    showgui : bool
+        default: True
+    gridrows, gridcols : int
+        the number of row and columns
+        default: gridrows=2, gridcols=3
+    dpi : int
+        the resolution of the saved png files
+        default: 600
     plotdir : str
         the root directory to put all the generated plots
     """
