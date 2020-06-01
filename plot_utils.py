@@ -68,7 +68,7 @@ def group_antenna(vis, antenna_list=[], refant='', subgroup_member=6):
 
 def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
                show_ants=True, show_mosaic=False, show_uvcoverage=True,
-               show_elevation=True, refant='1', overwrite=True,
+               show_elevation=True, show_allobs=False, refant='1', overwrite=True,
                bcal_field=None, gcal_field=None, target_field=None, 
                ):
     """ plot the basic information of the observation.
@@ -111,6 +111,9 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
     show_elevation : bool
         plot the elevation with time for all the fields
         default: True
+    show_allobs : bool
+        plot amplitude vs time for all the fields together
+        default: False
     refant : str
         the reference antenna, set to '' to plot all the antennas
         default: '1'
@@ -152,6 +155,13 @@ def check_info(vis=None, showgui=False, plotdir='./plots', spw='',
         plotms(vis=vis, xaxis='time', yaxis='elevation', spw=spw,
                avgchannel='1e6', coloraxis='field', 
                plotfile='{}/elevation.png'.format(plotdir), 
+               showgui=showgui, overwrite=overwrite)
+
+    if show_allobs and not os.path.exists('{}/all_observations.png'.format(plotdir)):
+        print("Plotting elevation with time...")
+        plotms(vis=vis, xaxis='time', yaxis='amp', spw=spw, 
+               avgchannel='1e8', avgtime='60', coloraxis='field',
+               plotfile='{}/all_observations.png'.format(plotdir),
                showgui=showgui, overwrite=overwrite)
     
     if bcal_field:
