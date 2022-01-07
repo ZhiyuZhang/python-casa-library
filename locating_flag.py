@@ -1,4 +1,4 @@
-# funtion to identify flagging data from the output in the logfile
+# A function to identify flagging data from the output in the logfile
 
 # Author: Zhi-Yu Zhang
 # Email: pmozhang@gmail.com 
