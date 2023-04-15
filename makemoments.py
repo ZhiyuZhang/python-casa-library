@@ -1,4 +1,4 @@
-# run inside CASA 
+# run inside CASA (6.1.2.4)
 
 # USAGE: 
 # makemoms(filename,channel_range,Npix)
@@ -6,7 +6,12 @@
 # Npix is the number of connected pixels, below which the structure will be flagged 
 # Example:: 
 # execfile('makemoments.py') 
-# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',10)
+# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',20)
+# or 
+# makemoms('cube_CO65_contsub_selfcal_image.image','485~510',20)
+
+# -- automatically tell the input format -- casa or fits 
+# latest update by zhiyuzhang 15 Apr 2023
 
 import os
 import glob
@@ -16,6 +21,7 @@ from scipy      import ndimage
 from matplotlib import pyplot as plt
 from scipy      import ndimage
 from astropy.utils.console import ProgressBar
+import numpy as np
 
 
 def flagdwarfs(filename,Npix):
@@ -52,7 +58,7 @@ def flagdwarfs(filename,Npix):
     print("|Eliminating 3-D structures with less than Npix connected pixels (in 3-D).|")
     print("=========================================================================")
     with ProgressBar(nb) as bar:
-        for i in xrange(nb):
+        for i in range(nb):
             bar.update()
             sl = ndimage.find_objects(labels==i)
         #   print(i)
@@ -67,14 +73,21 @@ def flagdwarfs(filename,Npix):
 
 
 def makemoms(fitsfilename,chans,Npix): 
-    imgname     = fitsfilename[0:-4]+"image"
-    outputname  = fitsfilename[0:-5]+"_mom0.fits"
-    outputname1 = fitsfilename[0:-5]+"_mom1.fits"
-    outputname2 = fitsfilename[0:-5]+"_mom2.fits"
-    # -- import fits file without primary beam (PB) correction 
+    if fitsfilename[-4:] == '.fits':
+        imgname     = fitsfilename[0:-4]+"image"
+        outputname  = fitsfilename[0:-5]+"_mom0.fits"
+        outputname1 = fitsfilename[0:-5]+"_mom1.fits"
+        outputname2 = fitsfilename[0:-5]+"_mom2.fits"
+        # -- import fits file without primary beam (PB) correction 
 
-    #    This is because the noise+signal is uniform in this data. 
-    importfits(imagename=imgname,fitsimage=fitsfilename,overwrite=True)
+        #    This is because the noise+signal is uniform in this data. 
+        importfits(imagename=imgname,fitsimage=fitsfilename,overwrite=True)
+    else: 
+        imgname     = fitsfilename
+        outputname  = fitsfilename+"_mom0.fits"
+        outputname1 = fitsfilename+"_mom1.fits"
+        outputname2 = fitsfilename+"_mom2.fits"
+
 
     # -- names of the images 
     sm_img    = 'sm.image'
@@ -82,8 +95,32 @@ def makemoms(fitsfilename,chans,Npix):
 
     # -- read header 
     myhead    = imhead(imgname,mode  = 'list')
-    bmaj      = myhead['beammajor']['value']
-    bmin      = myhead['beamminor']['value']
+    channels  =  myhead['shape'][2] #myhead['perplanebeams']['nChannels'] #  #channels  =  SpecExtrCube.shape[2] The same
+
+    perbmaj =  np.arange(channels)*1.0
+    perbmin =  np.arange(channels)*1.0
+    perbpa  =  np.arange(channels)*1.0
+    
+    if 'perplanebeams' in myhead:
+        print('perplanebeams')
+        for i in range(0, channels):
+            print(i)
+            perbmaj[i] = myhead['perplanebeams']['*'+str(i)]['major']['value']
+            perbmin[i] = myhead['perplanebeams']['*'+str(i)]['minor']['value']
+            perbpa[i]  = myhead['perplanebeams']['*'+str(i)]['positionangle']['value']
+    
+        bmaj = np.nanmean(perbmaj)
+        bmin = np.nanmean(perbmin)
+        vaxis = 3
+    
+    else:
+        print('Uniform beam')
+        bmaj = myhead['beammajor']['value']
+        bmin = myhead['beamminor']['value']
+        vaxis = 2
+
+    print("vaxis=", vaxis)
+ 
 
     # -- define the aimed angular resolution after convolution. It is 1.5 x of the mean original value. 1.5^2 ~ 2.25 x area   
     out_Beam = str(1.5 * max(np.mean(bmaj),np.mean(bmin)))+"arcsec"
@@ -92,7 +129,7 @@ def makemoms(fitsfilename,chans,Npix):
     imsmooth(imagename=imgname, outfile=sm_img, kernel='gauss', major=out_Beam, minor=out_Beam, pa="0deg",targetres=True,overwrite=True)
 
     # -- convolve to 2 x channel width,  2.25 x 2 ~ 4.5 x smoothing 
-    specsmooth(imagename=sm_img, outfile=sm_sm_img,  axis=2, dmethod="",width=2,function='hanning',overwrite=True)
+    specsmooth(imagename=sm_img, outfile=sm_sm_img,  axis=vaxis, dmethod="",width=2,function='hanning',overwrite=True)
 
     # -- define cutoff to be 3.5 sigma from the convolved datacube  
     #  This can be tuned, for optimising the final moment-0 map. 
