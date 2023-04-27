@@ -1,4 +1,4 @@
-# run inside CASA 
+# run inside CASA (6.1.2.4)
 
 # USAGE: 
 # makemoms(filename,channel_range,Npix)
@@ -6,18 +6,28 @@
 # Npix is the number of connected pixels, below which the structure will be flagged 
 # Example:: 
 # execfile('makemoments.py') 
-# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',10)
+# makemoms('cube_CO65_contsub_selfcal_image.fits','485~510',20)
+# or 
+# makemoms('cube_CO65_contsub_selfcal_image.image','485~510',20)
+
+# -- automatically tell the input format -- casa or fits 
+# latest update by zhiyuzhang 15 Apr 2023
 
 import os
 import glob
-from astropy.io import fits
-from matplotlib import pyplot as plt
-from scipy      import ndimage
-from matplotlib import pyplot as plt
-from scipy      import ndimage
+import numpy as np
+import astropy.units as u 
+from astropy.io            import fits
+from matplotlib            import pyplot as plt
+from scipy                 import ndimage
+from matplotlib            import pyplot as plt
+from scipy                 import ndimage
 from astropy.utils.console import ProgressBar
 
 
+
+
+#--------- flagwarfs is to remove the small patches in the moment maps. Normally those patches smaller than the beam size would not be beloved (on high fidelity)
 def flagdwarfs(filename,Npix):
 
     filename = filename 
@@ -52,7 +62,7 @@ def flagdwarfs(filename,Npix):
     print("|Eliminating 3-D structures with less than Npix connected pixels (in 3-D).|")
     print("=========================================================================")
     with ProgressBar(nb) as bar:
-        for i in xrange(nb):
+        for i in range(nb):
             bar.update()
             sl = ndimage.find_objects(labels==i)
         #   print(i)
@@ -62,19 +72,26 @@ def flagdwarfs(filename,Npix):
     hdu = fits.PrimaryHDU(header=header,data=sig)
     hdu.writeto('flagged.fits',overwrite=True)
 
+def makemoms(fitsfilename,chans, Npix='none'): 
+
+    os.system("cp -r "+fitsfilename+" "+fitsfilename+".backup")
 
 
+    if fitsfilename[-4:] == '.fits':
+        imgname     = fitsfilename[0:-4]+"image"
+        outputname0 = fitsfilename[0:-5]+"_mom0.fits"
+        outputname1 = fitsfilename[0:-5]+"_mom1.fits"
+        outputname2 = fitsfilename[0:-5]+"_mom2.fits"
+        # -- import fits file without primary beam (PB) correction 
+        # This is because the noise and (signal) is uniformly treated in this data. 
+        importfits(imagename=imgname,fitsimage=fitsfilename,overwrite=True)
+    else: 
+        imgname     = fitsfilename
+        outputname0 = fitsfilename+"_mom0.fits"
+        outputname1 = fitsfilename+"_mom1.fits"
+        outputname2 = fitsfilename+"_mom2.fits"
+    print("Image name: ",imgname)
 
-
-def makemoms(fitsfilename,chans,Npix): 
-    imgname     = fitsfilename[0:-4]+"image"
-    outputname  = fitsfilename[0:-5]+"_mom0.fits"
-    outputname1 = fitsfilename[0:-5]+"_mom1.fits"
-    outputname2 = fitsfilename[0:-5]+"_mom2.fits"
-    # -- import fits file without primary beam (PB) correction 
-
-    #    This is because the noise+signal is uniform in this data. 
-    importfits(imagename=imgname,fitsimage=fitsfilename,overwrite=True)
 
     # -- names of the images 
     sm_img    = 'sm.image'
@@ -82,17 +99,42 @@ def makemoms(fitsfilename,chans,Npix):
 
     # -- read header 
     myhead    = imhead(imgname,mode  = 'list')
-    bmaj      = myhead['beammajor']['value']
-    bmin      = myhead['beamminor']['value']
+    channels  =  myhead['shape'][2] #myhead['perplanebeams']['nChannels'] #  #channels  =  SpecExtrCube.shape[2] The same
+
+    perbmaj =  np.arange(channels)*1.0
+    perbmin =  np.arange(channels)*1.0
+    perbpa  =  np.arange(channels)*1.0
+    
+    if 'perplanebeams' in myhead:
+        print('perplanebeams')
+        for i in range(0, channels):
+            print(i)
+            perbmaj[i] = myhead['perplanebeams']['*'+str(i)]['major']['value']
+            perbmin[i] = myhead['perplanebeams']['*'+str(i)]['minor']['value']
+            perbpa[i]  = myhead['perplanebeams']['*'+str(i)]['positionangle']['value']
+    
+        bmaj = np.nanmean(perbmaj)
+        bmin = np.nanmean(perbmin)
+        vaxis = 3
+    
+    else:
+        print('Uniform beam')
+        bmaj = myhead['beammajor']['value']
+        bmin = myhead['beamminor']['value']
+        vaxis = 2
+
+    print("vaxis=", vaxis)
+ 
 
     # -- define the aimed angular resolution after convolution. It is 1.5 x of the mean original value. 1.5^2 ~ 2.25 x area   
     out_Beam = str(1.5 * max(np.mean(bmaj),np.mean(bmin)))+"arcsec"
+    print("Output beam size: ", out_Beam )
 
     # -- convolve to 1.5 x angular resolution 
     imsmooth(imagename=imgname, outfile=sm_img, kernel='gauss', major=out_Beam, minor=out_Beam, pa="0deg",targetres=True,overwrite=True)
 
     # -- convolve to 2 x channel width,  2.25 x 2 ~ 4.5 x smoothing 
-    specsmooth(imagename=sm_img, outfile=sm_sm_img,  axis=2, dmethod="",width=2,function='hanning',overwrite=True)
+    specsmooth(imagename=sm_img, outfile=sm_sm_img,  axis=vaxis, dmethod="",width=2,function='hanning',overwrite=True)
 
     # -- define cutoff to be 3.5 sigma from the convolved datacube  
     #  This can be tuned, for optimising the final moment-0 map. 
@@ -103,10 +145,21 @@ def makemoms(fitsfilename,chans,Npix):
     ia.open(imgname)
     ia.calcmask(mask=str(sm_sm_img)+" > "+str(up_cutoff),name='masked_img')
     ia.close()
+
     
     os.system('rm -rf file_w_dwarfs.fits flagged.fits img_wo_dwarfs.im') 
     exportfits(imagename=imgname,fitsimage='file_w_dwarfs.fits')
-    flagdwarfs('file_w_dwarfs.fits',Npix)
+    if Npix == 'none':
+        BeamArea = bmaj*bmin
+        if myhead['cunit1'] == 'rad':
+            cdelt = np.abs(myhead['cdelt1']*u.rad.to(u.arcsec))
+        NpixBeam = BeamArea/(cdelt**2)/2
+        print("Beam Pixels ", NpixBeam)
+    else:
+        NpixBeam = Npix
+        print("Input Pixels ", Npix)
+    
+    flagdwarfs('file_w_dwarfs.fits', NpixBeam)
     importfits(fitsimage='flagged.fits',imagename='img_wo_dwarfs.im')
     imgname = 'img_wo_dwarfs.im'
     exportfits(imagename=imgname,fitsimage='file_wo_dwarfs.fits',overwrite=True)
@@ -114,18 +167,15 @@ def makemoms(fitsfilename,chans,Npix):
 
     # -- Make moment0 image, using the masked, original resolution, PB-corrected datacube. 
     os.system("rm -rf image.mom0 mom0.fits")
-    outputname ='mom0.fits'
     immoments( imagename=imgname,moments=0,chans=chans,outfile='image.mom0') 
-    exportfits(imagename='image.mom0',fitsimage=outputname,overwrite=True)
+    exportfits(imagename='image.mom0',fitsimage=outputname0,overwrite=True)
 
     os.system("rm -rf image.mom1 mom1.fits")
-    outputname ='mom1.fits'
     immoments( imagename=imgname,moments=1,chans=chans,outfile='image.mom1',excludepix=[-100.,0.0]) 
-    exportfits(imagename='image.mom1',fitsimage=outputname,overwrite=True)
+    exportfits(imagename='image.mom1',fitsimage=outputname1,overwrite=True)
 
     os.system("rm -rf image.mom2 mom2.fits")
-    outputname ='mom2.fits'
     immoments( imagename=imgname,moments=2,chans=chans,outfile='image.mom2',excludepix=[-100.,0.0]) 
-    exportfits(imagename='image.mom2',fitsimage=outputname,overwrite=True)
+    exportfits(imagename='image.mom2',fitsimage=outputname2,overwrite=True)
     
       
